@@ -21,13 +21,30 @@ on:
 
 jobs:
   analyze:
+    env:
+      TEMPLATE_TYPE: app
+      IS_PIPELINE: 'true'
+      CMD_OPTS: ''
+      SMALL_TEST_CMD_OPTS: SmallTests
+      MEDIUM_TEST_CMD_OPTS: MediumTests
+      CONTRACT_TEST_CMD_OPTS: ContractTests
+      GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+      NAMESPACE: suitex-search
+      NAMESPACE_AIRLOCK_HASH: '${{ secrets.AIRLOCK_HASH }}'
+      NAMESPACE_AIRLOCK_NAME: dev
+      PROJECT_NAME: content-search
+      PIPELINE_NAME: content-search
+      PROJECT_DIR: ''
+
+    runs-on: quark
+    
     name: Analyze
     # Runner size impacts CodeQL analysis time. To learn more, please see:
     #   - https://gh.io/recommended-hardware-resources-for-running-codeql
     #   - https://gh.io/supported-runners-and-hardware-resources
     #   - https://gh.io/using-larger-runners
     # Consider using larger runners for possible analysis time improvements.
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+#    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
     timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
     permissions:
       # required for all workflows
@@ -40,15 +57,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [  ]
+        language: [ 'java-kotlin' ]
         # CodeQL supports [ 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift' ]
         # Use only 'java-kotlin' to analyze code written in Java, Kotlin or both
         # Use only 'javascript-typescript' to analyze code written in JavaScript, TypeScript or both
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+#    - name: Checkout repository
+#      uses: actions/checkout@v4
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -62,11 +79,20 @@ jobs:
         # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         # queries: security-extended,security-and-quality
 
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: update fnd
+      run: fnd update
+    - name: package
+      run: |-
+        fnd tanagra:build:package \
+          --environment_json='{}'
 
     # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
     # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+#    - name: Autobuild
+#      uses: github/codeql-action/autobuild@v3
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -78,6 +104,18 @@ jobs:
     #     echo "Run, Build Application using script"
     #     ./location_of_script_within_repo/buildscript.sh
 
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: update fnd
+      run: fnd update
+
+    - name: package
+      run: |-
+        fnd tanagra:build:package \
+          --environment_json='{}'
+    
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
